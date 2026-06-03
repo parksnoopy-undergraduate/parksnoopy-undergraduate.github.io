@@ -1,5 +1,12 @@
 name: Deploy Hugo site from private source
 
+# IMPORTANT FOR FUTURE AGENTS:
+# This workflow lives in a separate PUBLIC Pages repository.
+# It must NOT build the public repository root.
+# It checks out this private/source repository into ./source, then builds Hugo there.
+# Keep repository/ref/path/working-directory/source/public unless user explicitly changes deploy model.
+# Build-time data generation runs inside ./source before Hugo, so generated JSON is included in the Pages artifact but not committed.
+
 on:
   push:
     branches:
@@ -21,6 +28,7 @@ defaults:
 
 env:
   HUGO_VERSION: "0.162.1"
+  PYTHON_VERSION: "3.12"
 
 jobs:
   build:
@@ -38,6 +46,49 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Verify checked-out source layout
+        run: |
+          echo "Checked out private source:"
+          git -C source rev-parse --short HEAD
+          echo
+          echo "Top-level source tree:"
+          find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
+          echo
+          missing=0
+          for p in \
+            source/hugo.toml \
+            source/content \
+            source/themes/PaperMod \
+            source/data/pipeline.yml \
+            source/scripts/pipeline/build.py \
+            source/sunwoo \
+            source/yoonsoo
+          do
+            if [[ ! -e "$p" ]]; then
+              echo "Missing required path: $p"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "Private repo branch ref=pages does not contain committed Hugo/data-pipeline source files."
+            echo "This workflow intentionally builds ./source, not the public workflow repository root."
+            exit 1
+          fi
+
+      - name: Set up Python for build-time data pipeline
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install data pipeline dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas openpyxl pyyaml
+
+      - name: Generate app-local visualization data
+        working-directory: source
+        run: python scripts/pipeline/build.py --config data/pipeline.yml
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
@@ -52,14 +103,7 @@ jobs:
       - name: Verify Hugo
         run: hugo version
 
-      - name: Verify source layout
-        run: |
-          test -f source/hugo.toml
-          test -d source/content
-          test -d source/static/finnish-mobility-viz
-          test -d source/themes/PaperMod
-
-      - name: Build Hugo site
+      - name: Build Hugo site from private source
         working-directory: source
         run: |
           hugo build \
