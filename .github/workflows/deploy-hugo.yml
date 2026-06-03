@@ -5,7 +5,8 @@ name: Deploy Hugo site from private source
 # It must NOT build the public repository root.
 # It checks out this private/source repository into ./source, then builds Hugo there.
 # Keep repository/ref/path/working-directory/source/public unless user explicitly changes deploy model.
-# Build-time data generation runs inside ./source before Hugo, so generated JSON is included in the Pages artifact but not committed.
+# Optional build-time data generation runs inside ./source before Hugo when source/data/pipeline.yml
+# and source/scripts/pipeline/build.py exist. Older Hugo-only branches are valid and must still build.
 
 on:
   push:
@@ -46,7 +47,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify checked-out source layout
+      - name: Verify checked-out Hugo source layout
+        id: source-layout
         run: |
           echo "Checked out private source:"
           git -C source rev-parse --short HEAD
@@ -58,11 +60,7 @@ jobs:
           for p in \
             source/hugo.toml \
             source/content \
-            source/themes/PaperMod \
-            source/data/pipeline.yml \
-            source/scripts/pipeline/build.py \
-            source/sunwoo \
-            source/yoonsoo
+            source/themes/PaperMod
           do
             if [[ ! -e "$p" ]]; then
               echo "Missing required path: $p"
@@ -70,22 +68,33 @@ jobs:
             fi
           done
           if [[ "$missing" -ne 0 ]]; then
-            echo "Private repo branch ref=pages does not contain committed Hugo/data-pipeline source files."
+            echo "Private repo branch ref=pages does not contain committed Hugo source files."
             echo "This workflow intentionally builds ./source, not the public workflow repository root."
             exit 1
           fi
 
+          if [[ -f source/data/pipeline.yml && -f source/scripts/pipeline/build.py ]]; then
+            echo "pipeline=true" >> "$GITHUB_OUTPUT"
+            echo "Found data pipeline; will generate app-local JSON before Hugo build."
+          else
+            echo "pipeline=false" >> "$GITHUB_OUTPUT"
+            echo "No data pipeline found on this source branch; continuing as Hugo-only deploy."
+          fi
+
       - name: Set up Python for build-time data pipeline
+        if: steps.source-layout.outputs.pipeline == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install data pipeline dependencies
+        if: steps.source-layout.outputs.pipeline == 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install pandas openpyxl pyyaml
 
       - name: Generate app-local visualization data
+        if: steps.source-layout.outputs.pipeline == 'true'
         working-directory: source
         run: python scripts/pipeline/build.py --config data/pipeline.yml
 
