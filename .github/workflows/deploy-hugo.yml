@@ -59,6 +59,7 @@ jobs:
           test -e source/scripts/pipeline/build.py
           test -e source/sunwoo
           test -e source/yoonsoo
+          test -e source/muryang
           test -s source/data/sunwoo/wos1_50000.xlsx
           test -s source/data/yoonsoo/wos_all_2008_2023.xlsx
           python -c "from pathlib import Path; assert not Path('source/data/sunwoo/wos1_50000.xlsx').read_bytes().startswith(b'version https://git-lfs')"
@@ -82,6 +83,7 @@ jobs:
           mkdir -p static
           cp -R sunwoo static/sunwoo
           cp -R yoonsoo static/yoonsoo
+          cp -R muryang static/muryang
 
       - name: Setup Pages
         id: pages
