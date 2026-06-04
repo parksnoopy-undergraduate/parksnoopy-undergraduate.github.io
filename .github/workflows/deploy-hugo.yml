@@ -44,6 +44,7 @@ jobs:
           token: ${{ secrets.SOURCE_ACCESS_TOKEN }}
           path: source
           submodules: recursive
+          lfs: true
           fetch-depth: 0
           persist-credentials: false
 
@@ -58,23 +59,22 @@ jobs:
           test -e source/scripts/pipeline/build.py
           test -e source/sunwoo
           test -e source/yoonsoo
+          test -s source/data/sunwoo/wos1_50000.xlsx
+          test -s source/data/yoonsoo/wos_all_2008_2023.xlsx
+          python -c "from pathlib import Path; assert not Path('source/data/sunwoo/wos1_50000.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          python -c "from pathlib import Path; assert not Path('source/data/yoonsoo/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
 
       - name: Set up Python for build-time data pipeline
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install data pipeline dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pandas openpyxl pyyaml
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
 
       - name: Generate app-local visualization data
         working-directory: source
-        # Current pages branch has Sunwoo source data. Yoonsoo's merged WoS input is not
-        # committed yet, so deploy builds Sunwoo data only. Switch back to full pipeline
-        # after source/data/yoonsoo/wos_all_2008_2023.xlsx is committed.
-        run: python scripts/pipeline/build.py --config data/pipeline.yml
+        run: uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
 
       - name: Stage visualization apps for Hugo static publish
         working-directory: source
