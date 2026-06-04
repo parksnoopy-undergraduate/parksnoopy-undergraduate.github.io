@@ -10,7 +10,7 @@ name: Deploy Hugo site from private source
 on:
   push:
     branches:
-      - pages
+      - main
   workflow_dispatch:
 
 permissions:
