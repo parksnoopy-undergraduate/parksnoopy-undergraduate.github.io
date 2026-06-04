@@ -3,9 +3,9 @@ name: Deploy Hugo site from private source
 # IMPORTANT FOR FUTURE AGENTS:
 # This workflow lives in a separate PUBLIC Pages repository.
 # It checks out this source repository into ./source.
-# Committed Hugo resources live under ./source/site.
-# Data/app sources live at ./source root.
-# Build data at ./source, stage apps into ./source/site/static, then build Hugo from ./source/site.
+# Hugo resources now live at ./source root, not ./source/site.
+# Build generated JSON at ./source/release/data, copy it into ./source/static/data, then build Hugo from ./source.
+# Do not commit generated JSON; Actions creates it inside the Pages artifact only.
 
 on:
   push:
@@ -51,17 +51,14 @@ jobs:
         run: |
           git -C source rev-parse --short HEAD
           find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
-          test -e source/site/hugo.toml
-          test -e source/site/content
-          test -e source/site/themes/PaperMod
+          test -e source/hugo.toml
+          test -e source/pages
+          test -e source/layouts/index.html
+          test -e source/themes/PaperMod
           test -e source/data/pipeline.yml
           test -e source/scripts/pipeline/build.py
-          test -e source/sunwoo
-          test -e source/yoonsoo
-          test -e source/muryang
-          test -s source/data/wos/wos_all_2008_2023.xlsx
-          test -s source/data/yoonsoo/finland.json
-          python -c "from pathlib import Path; assert not Path('source/data/wos/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          test -s source/data/release/wos_all_2008_2023.xlsx
+          python -c "from pathlib import Path; assert not Path('source/data/release/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
 
       - name: Set up Python for build-time data pipeline
         uses: actions/setup-python@v6
@@ -71,17 +68,16 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
 
-      - name: Generate app-local visualization data
+      - name: Generate release visualization data
         working-directory: source
         run: uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
 
-      - name: Stage visualization apps for Hugo static publish
+      - name: Stage generated data for Hugo static publish
         working-directory: source
         run: |
-          mkdir -p site/static
-          cp -R sunwoo site/static/sunwoo
-          cp -R yoonsoo site/static/yoonsoo
-          cp -R muryang site/static/muryang
+          rm -rf static/data
+          mkdir -p static/data
+          cp -R release/data/. static/data/
 
       - name: Setup Pages
         id: pages
@@ -98,7 +94,7 @@ jobs:
         run: hugo version
 
       - name: Build Hugo site from private source
-        working-directory: source/site
+        working-directory: source
         run: |
           hugo build \
             --gc \
@@ -108,7 +104,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: source/site/public
+          path: source/public
 
   deploy:
     runs-on: ubuntu-latest
