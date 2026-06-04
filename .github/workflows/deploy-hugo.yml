@@ -10,7 +10,7 @@ name: Deploy Hugo site from private source
 on:
   push:
     branches:
-      - main
+      - pages
   workflow_dispatch:
 
 permissions:
@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify checked-out Hugo source layout
+      - name: Verify checked-out source layout
         run: |
           git -C source rev-parse --short HEAD
           find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
@@ -59,12 +59,9 @@ jobs:
           test -e source/sunwoo
           test -e source/yoonsoo
           test -e source/muryang
-          test -s source/data/sunwoo/wos1_50000.xlsx
-          test -s source/data/yoonsoo/wos_all_2008_2023.xlsx
-          test -s source/data/muryang/wos_all_2008_2023.xlsx
-          python -c "from pathlib import Path; assert not Path('source/data/sunwoo/wos1_50000.xlsx').read_bytes().startswith(b'version https://git-lfs')"
-          python -c "from pathlib import Path; assert not Path('source/data/yoonsoo/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
-          python -c "from pathlib import Path; assert not Path('source/data/muryang/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          test -s source/data/wos/wos_all_2008_2023.xlsx
+          test -s source/data/yoonsoo/finland.json
+          python -c "from pathlib import Path; assert not Path('source/data/wos/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
 
       - name: Set up Python for build-time data pipeline
         uses: actions/setup-python@v6
