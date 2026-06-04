@@ -4,12 +4,14 @@ name: Deploy Hugo site from private source
 # This workflow lives in a separate PUBLIC Pages repository.
 # It checks out this source repository into ./source.
 # Hugo resources now live at ./source root, not ./source/site.
-# Build generated JSON at ./source/release/data, copy it into ./source/static/data, then build Hugo from ./source.
-# Do not commit generated JSON; Actions creates it inside the Pages artifact only.
+# USE_CACHE=true uses committed ./source/release/data JSON for fast temporary release.
+# USE_CACHE=false regenerates JSON at ./source/release/data, then copies it into ./source/static/data.
 
 on:
   push:
     branches:
+      # Since our public repo is using `main` branch,
+      # so this must be `main`, never edit into `pages`
       - main
   workflow_dispatch:
 
@@ -29,6 +31,7 @@ defaults:
 env:
   HUGO_VERSION: "0.162.1"
   PYTHON_VERSION: "3.12"
+  USE_CACHE: "true"
 
 jobs:
   build:
@@ -53,7 +56,7 @@ jobs:
           find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
           test -e source/hugo.toml
           test -e source/pages
-          test -e source/layouts/index.html
+          test -e source/layouts/visualization/single.html
           test -e source/themes/PaperMod
           test -e source/data/pipeline.yml
           test -e source/scripts/pipeline/build.py
@@ -70,7 +73,15 @@ jobs:
 
       - name: Generate release visualization data
         working-directory: source
-        run: uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
+        run: |
+          if [ "${USE_CACHE}" = "true" ]; then
+            test -s release/data/timeline.json
+            test -s release/data/funder-event.json
+            test -s release/data/finland.json
+            echo "USE_CACHE=true: using committed release/data JSON"
+          else
+            uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
+          fi
 
       - name: Stage generated data for Hugo static publish
         working-directory: source
