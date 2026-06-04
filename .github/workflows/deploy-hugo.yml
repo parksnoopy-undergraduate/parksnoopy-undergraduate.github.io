@@ -2,11 +2,10 @@ name: Deploy Hugo site from private source
 
 # IMPORTANT FOR FUTURE AGENTS:
 # This workflow lives in a separate PUBLIC Pages repository.
-# It must NOT build the public repository root.
-# It checks out this private/source repository into ./source, then builds Hugo there.
-# Keep repository/ref/path/working-directory/source/public unless user explicitly changes deploy model.
-# Build-time data generation is required. If source/data/pipeline.yml or
-# source/scripts/pipeline/build.py is missing, fail directly instead of falling back.
+# It checks out this source repository into ./source.
+# Committed Hugo resources live under ./source/site.
+# Data/app sources live at ./source root.
+# Build data at ./source, stage apps into ./source/site/static, then build Hugo from ./source/site.
 
 on:
   push:
@@ -52,9 +51,9 @@ jobs:
         run: |
           git -C source rev-parse --short HEAD
           find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
-          test -e source/hugo.toml
-          test -e source/content
-          test -e source/themes/PaperMod
+          test -e source/site/hugo.toml
+          test -e source/site/content
+          test -e source/site/themes/PaperMod
           test -e source/data/pipeline.yml
           test -e source/scripts/pipeline/build.py
           test -e source/sunwoo
@@ -62,15 +61,17 @@ jobs:
           test -e source/muryang
           test -s source/data/sunwoo/wos1_50000.xlsx
           test -s source/data/yoonsoo/wos_all_2008_2023.xlsx
+          test -s source/data/muryang/wos_all_2008_2023.xlsx
           python -c "from pathlib import Path; assert not Path('source/data/sunwoo/wos1_50000.xlsx').read_bytes().startswith(b'version https://git-lfs')"
           python -c "from pathlib import Path; assert not Path('source/data/yoonsoo/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          python -c "from pathlib import Path; assert not Path('source/data/muryang/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
 
       - name: Set up Python for build-time data pipeline
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
 
       - name: Generate app-local visualization data
@@ -80,10 +81,10 @@ jobs:
       - name: Stage visualization apps for Hugo static publish
         working-directory: source
         run: |
-          mkdir -p static
-          cp -R sunwoo static/sunwoo
-          cp -R yoonsoo static/yoonsoo
-          cp -R muryang static/muryang
+          mkdir -p site/static
+          cp -R sunwoo site/static/sunwoo
+          cp -R yoonsoo site/static/yoonsoo
+          cp -R muryang site/static/muryang
 
       - name: Setup Pages
         id: pages
@@ -100,7 +101,7 @@ jobs:
         run: hugo version
 
       - name: Build Hugo site from private source
-        working-directory: source
+        working-directory: source/site
         run: |
           hugo build \
             --gc \
@@ -110,7 +111,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: source/public
+          path: source/site/public
 
   deploy:
     runs-on: ubuntu-latest
