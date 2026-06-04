@@ -74,7 +74,7 @@ jobs:
         # Current pages branch has Sunwoo source data. Yoonsoo's merged WoS input is not
         # committed yet, so deploy builds Sunwoo data only. Switch back to full pipeline
         # after source/data/yoonsoo/wos_all_2008_2023.xlsx is committed.
-        run: python scripts/pipeline/build.py --config data/pipeline.yml --app sunwoo
+        run: python scripts/pipeline/build.py --config data/pipeline.yml
 
       - name: Stage visualization apps for Hugo static publish
         working-directory: source
