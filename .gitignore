@@ -1,0 +1,11 @@
+# Hugo generated artifacts
+public/
+.hugo_build.lock
+resources/_gen/
+
+# Workflow/local staged Hugo static assets copied from project submodules
+static/
+
+# Local caches
+.cache/
+.DS_Store

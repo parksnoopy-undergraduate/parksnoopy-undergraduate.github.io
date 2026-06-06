@@ -1,0 +1,8 @@
+[submodule "projects/dataviz"]
+	path = projects/dataviz
+	url = https://github.com/parksnoopy-undergraduate/Data-Visualization-2026-Spring
+	branch = pages
+[submodule "projects/ontology"]
+	path = projects/ontology
+	url = https://github.com/parksnoopy-undergraduate/Ontology-2026-Spring
+	branch = pages

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<!--
+  ========================================================================
+  整合版 · 芬兰科研流动 — 2008–2023
+  本文件把数据介绍、流动分析、机构分析与政策分析整合到统一设计 / 统一年份（2008–2023）。
+  ========================================================================
+-->
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>芬兰科研流动 · 2008–2023</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/dataviz/static/css/style.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/scrollama@3.2.0/build/scrollama.min.js"></script>
+</head>
+<body>
+  <a class="back-title" href="/">← 回到首页</a>
+
+
+  <!-- ========== 0. 开场 ========== -->
+  <section id="intro" class="full hero">
+    <canvas id="intro-canvas"></canvas>
+    <div class="intro-overlay">
+      <div class="intro-meta">芬兰 · 2008 — 2023</div>
+      <h1 class="intro-title">
+        芬兰<span class="intro-egg" id="credits-trigger" title="团队分工" role="button" tabindex="0">研究者</span><br/><span class="accent">流动追踪</span>
+      </h1>
+      <p class="intro-sub">
+        约 8.3 万篇论文，2.9 万名学者，21 座城市，12 个学科领域。<br/>
+        十五年间，城市、学科与资助结构发生了怎样的变化。
+      </p>
+      <div class="scroll-cue">↓ 向下滚动</div>
+    </div>
+  </section>
+
+  <!-- ========== 数据介绍 ========== -->
+  <section id="data-intro" class="full center">
+    <div class="di-card">
+      <div class="ctx-eyebrow">数据介绍 · 样本范围</div>
+      <h2>数据概览：<br/>合作方式与学科构成</h2>
+      <p class="di-lead">
+        我们用的是 <em>Web of Science</em> 上 2008–2023 年、至少一位作者在芬兰的期刊论文（约 17 万篇）。
+        分析流动之前，先确认两个基础背景：<strong>合作方式</strong>与<strong>学科构成</strong>。
+        <span class="di-tag">单位：论文 · 年份：2008–2023</span>
+      </p>
+      <div class="di-block">
+        <div class="di-sub">① 合作趋势：国际合作占比上升</div>
+        <div class="di-chartwrap"><svg id="collab-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+      </div>
+      <div class="di-block">
+        <div class="di-sub">② 学科构成 —— 论文最多的 25 个 WoS 学科：2018 年前后对比</div>
+        <div class="di-cat-grid">
+          <div class="di-cat-col">
+            <div class="di-sub2">a) 2008–2017 论文最多的 25 个学科</div>
+            <div class="di-chartwrap"><svg id="cat-svg-before" preserveAspectRatio="xMidYMid meet"></svg></div>
+          </div>
+          <div class="di-cat-col">
+            <div class="di-sub2">b) 2018 年起累计（绿＝2018 年起新增 / 蓝＝2017 年及以前；金色名＝新进入前25的学科）</div>
+            <div class="di-chartwrap"><svg id="cat-svg-after" preserveAspectRatio="xMidYMid meet"></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="di-finding">
+        国际合作论文占比长期接近一半，并从约 49% 上升到 54%；独立作者论文占比较低。后续流动分析建立在这个高协作背景上。
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PART 1 · 流动入口 ========== -->
+  <section id="move-doors" class="full">
+    <div class="md-prompt">两种流动 · 选择进入</div>
+    <div class="md-doors">
+      <a class="md-door" id="md-left" href="#region">
+        <div class="md-tag">地点流动</div>
+        <h2 class="md-title">城市之间，<br/>研究者如何流动</h2>
+        <p class="md-sub">芬兰 21 座城市之间的人员流动地图。</p>
+        <div class="md-cta">进入 ↓</div>
+        <div class="md-glow" data-side="left"></div>
+      </a>
+      <div class="md-divider"></div>
+      <a class="md-door" id="md-right" href="#disc">
+        <div class="md-tag">学科流动</div>
+        <h2 class="md-title">学科之间，<br/>研究方向如何转移</h2>
+        <p class="md-sub">12 个学科领域之间的跨领域流动桑基图。</p>
+        <div class="md-cta">进入 ↓</div>
+        <div class="md-glow" data-side="right"></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ========== PART 1A · 地点流动 ========== -->
+  <section id="region" class="full center">
+    <div class="rg-card" id="region-viz">
+      <div class="ctx-eyebrow" style="color:var(--left-tint)">地点流动 · 全样本</div>
+      <h2>城市之间，研究者如何流动？</h2>
+      <p class="rg-lead">
+        点的大小表示该城市的流动规模；默认显示主要流动路径。
+        <span class="rg-hint">▸ 把鼠标移到城市上看它的流向，点击可锁定。</span>
+      </p>
+      <div class="viz-controls">
+        <button class="period-btn active" data-period="p1">2009–2013</button>
+        <button class="period-btn" data-period="p2">2014–2019</button>
+        <button class="period-btn" data-period="p3">2020–2023</button>
+      </div>
+      <div class="rg-layout">
+        <div class="rg-mapwrap"><svg id="region-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <aside id="region-panel" class="rg-panel"></aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PART 1B · 学科流动 (Sankey) ========== -->
+  <section id="disc" class="full center">
+    <div class="dk-card" id="disc-viz">
+      <div class="ctx-eyebrow" style="color:var(--right-tint)">学科流动 · 全样本</div>
+      <h2>学科之间，研究方向如何转移？</h2>
+      <p class="dk-lead">
+        左侧为出发学科，右侧为到达学科；色带越粗，跨学科流动越多（仅显示<em>跨领域</em>流动）。
+        <span class="rg-hint">▸ 把鼠标移到色带上看具体流向。</span>
+      </p>
+      <div class="viz-controls">
+        <button class="period-btn active" data-period="p1">2009–2013</button>
+        <button class="period-btn" data-period="p2">2014–2019</button>
+        <button class="period-btn" data-period="p3">2020–2023</button>
+      </div>
+      <div class="dk-wrap">
+        <svg id="disc-sankey" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tl-tooltip" id="disc-tip"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 机构层面的流向 ========== -->
+  <section id="inst" class="full center">
+    <div class="inst-card">
+      <div class="ctx-eyebrow">机构层面 · 从城市到大学</div>
+      <h2>进一步观察：<br/>研究者流向哪些机构？</h2>
+      <p class="inst-lead">
+        前面观察的是<em>城市</em>之间的流动。这里进一步比较芬兰各<em>大学 / 研究机构</em>之间的净流入与净流出，
+        以及学者是否更常流向平均被引更高的机构。
+        <span class="di-tag">单位：芬兰机构 · 年份：2008–2023</span>
+      </p>
+      <div class="inst-block">
+        <div class="di-sub">① 机构人才净流动（净流入 = 流入 − 流出）</div>
+        <div class="inst-chartwrap"><svg id="inst-brain-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="di-finding">
+          <strong>国立研究机构净流入较多，部分大学净流出较多</strong>：Luke、VTT、THL、气象所等净流入为正；Aalto、于韦斯屈莱、奥卢等大学净流出。
+          其中，净流出最多的几个旧机构（国家公共卫生所、MTT 农业食品所、森林研究所）正是 <strong>2013–15 年 TULA 改革中被裁撤、并入 THL 与 Luke</strong> 的机构；机构合并会反映在论文署名变化中。
+          <span class="di-src">注意：这类「流动」部分来自机构<strong>改名 / 合并</strong>（如 MTT→Luke），不一定对应真实人员迁居。</span>
+        </div>
+      </div>
+      <div class="inst-block">
+        <div class="di-sub">② 是否流向平均被引更高的机构？</div>
+        <div id="inst-impact" class="inst-impact"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PART 2 · 政策评估（导入） ========== -->
+  <section id="context" class="full center">
+    <div class="ctx-card">
+      <div class="ctx-eyebrow">关于这个可视化</div>
+      <h2>资助政策，<br/>与研究者流动有关吗？</h2>
+      <p class="ctx-lead">
+        本可视化把<em>芬兰的科研资助政策</em>与<em>研究者的流动</em>放在同一条时间轴上比较：
+        2008–2023 年间，资助来源与城市 / 学科流动是否呈现相近变化？
+        数据来自 17 万篇芬兰署名论文、13 万名以 ORCID 识别的学者。
+      </p>
+      <div class="ctx-define">
+        <div class="cd-row"><span class="cd-label">如何测量「流动」</span>
+        <span>若同一位学者前后两篇论文的所属城市 / 学科不同，即记为一次流动。我们不追踪个人，只统计「变化」，按年份还原。</span></div>
+        <div class="cd-row"><span class="cd-label">如何测量「资助」</span>
+        <span>论文致谢中提到的资助来源（仅「是否提及」，<strong>非金额</strong>）。下方为三个主要资助来源。</span></div>
+      </div>
+      <p class="ev-grouphint">
+        <span style="color:var(--ev-horizon)">Horizon</span> 以跨学科为目标（<b>驱动</b>）；
+        <span style="color:var(--ev-tula)">Academy</span> 与 <span style="color:var(--ev-aalto)">Business Finland</span> 作为<b>背景对照</b>。
+        <span class="gh-note">（同期还有 2013 年 <b>TULA 改革</b> 把经费导向跨学科，但属制度改革、论文中不可测，故仅在时间轴上标记。）</span>
+      </p>
+      <div class="events three-row">
+        <!-- 驱动 -->
+        <div class="event-card" style="--ev: var(--ev-horizon)">
+          <div class="ev-bg" data-ev="horizon"></div>
+          <div class="ev-body">
+            <div class="ev-tag">欧盟 · 跨国跨学科 · 2014~</div>
+            <div class="ev-role driver">↔ 与流动直接相关</div>
+            <div class="ev-name">Horizon 2020</div>
+            <div class="ev-line"><span class="ev-k">是什么</span><span>EU 800 亿欧元共同研究基金；<strong>奖励跨国、跨学科</strong>协作，单一学科较难获得。</span></div>
+            <div class="ev-hyp">→ 跨学科导向是否对应更高的<b>学科流动率</b>？</div>
+          </div>
+        </div>
+        <!-- 背景 1 -->
+        <div class="event-card bg-card" style="--ev: var(--ev-tula)">
+          <div class="ev-bg" data-ev="academy"></div>
+          <div class="ev-body">
+            <div class="ev-tag">基础研究 · 国内主力 · 长期</div>
+            <div class="ev-role bg">背景 · 对照</div>
+            <div class="ev-name">Academy of Finland</div>
+            <div class="ev-line"><span class="ev-k">是什么</span><span>芬兰学术院，国家基础研究主力；<strong>长期稳定、不限方向</strong>，占比最大。</span></div>
+            <div class="ev-hyp">→ 长期基础研究资助是否与流动变化关系较弱？</div>
+          </div>
+        </div>
+        <!-- 背景 2 -->
+        <div class="event-card bg-card" style="--ev: var(--ev-aalto)">
+          <div class="ev-bg" data-ev="business"></div>
+          <div class="ev-body">
+            <div class="ev-tag">应用 · 产业 · 长期</div>
+            <div class="ev-role bg">背景 · 对照</div>
+            <div class="ev-name">Business Finland</div>
+            <div class="ev-line"><span class="ev-k">是什么</span><span>前身 Tekes，应用与产业合作资助；<strong>面向商业化</strong>，偏单一应用领域。</span></div>
+            <div class="ev-hyp">→ 应用型资助与跨领域流动是否关系较弱？</div>
+          </div>
+        </div>
+      </div>
+      <div class="disclaimer">
+        本可视化<strong>不主张因果关系</strong>。资助与流动同期出现 ≠ 谁导致谁；我们只把两条曲线并列，由读者判断。
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 2. 政策评估：不同资助对应的流动差异 ========== -->
+  <section id="funder-eval" class="full center">
+    <div class="fe-card">
+      <div class="ctx-eyebrow">政策评估 · 组间差异</div>
+      <h2>不同资助下，<br/>流动率是否不同？</h2>
+      <p class="fe-lead">
+        若政策鼓励研究者<em>跨学科、跨城市</em>流动，下图比较获得不同资助的学者，实际<strong>流动率是否更高</strong>。
+        <span class="fe-hint">▸ 悬停或点击任意柱子，查看该资助的评估细节。</span>
+      </p>
+      <div class="fe-layout">
+        <div class="fe-chart-wrap">
+          <div class="fe-controls">
+            <span class="fe-metric-toggle">
+              <button class="tl-btn active" data-metric="field">跨学科流动</button>
+              <button class="tl-btn" data-metric="city">跨城市流动</button>
+            </span>
+          </div>
+          <svg id="funder-svg" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <aside id="fe-detail" class="fe-detail"></aside>
+      </div>
+      <div id="fe-callout" class="fe-callout"></div>
+    </div>
+  </section>
+
+  <!-- ========== 2.2 事件研究：同一学者获资助前后 ========== -->
+  <section id="funder-event" class="full center">
+    <div class="fev-card">
+      <div class="ctx-eyebrow">政策评估 · 选择效应检验</div>
+      <h2>是否存在<br/>选择效应？</h2>
+      <p class="fev-lead">
+        上图仍有一个问题：<em>原本流动倾向较高的学者，可能也更容易获得资助</em>。这会混淆「资助」与「流动」的关系。
+        因此换一种比较方式：固定<strong>同一位学者</strong>，比较其<em>首次获得某类资助前后</em>的流动率。
+        个体固定后，可以减少原本流动倾向差异的影响；再用<em>从未获得该类资助</em>的同行作为时间趋势对照（类 DiD），扣除共同时间变化。
+        <span class="fev-hint">▸ 空心点＝资助前 · 实心点＝资助后（同一批人）；误差线＝95% 置信区间；灰 ◇＝仅按时间趋势本应到达的位置。切换看「学科 / 城市」。</span>
+      </p>
+      <div class="fev-controls2">
+        <span class="fev-metric-toggle">
+          <button class="tl-btn active" data-metric="field">跨学科流动</button>
+          <button class="tl-btn" data-metric="city">跨城市流动</button>
+        </span>
+      </div>
+      <div class="fev-chartwrap"><svg id="fev-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div id="fev-verdict" class="fev-verdict"></div>
+
+      <!-- 平行趋势检验（event-time）：仅就跨学科口径，验证 DiD 赖以成立的前提 -->
+      <div class="fev-et">
+        <div class="di-sub">平行趋势检验 · 以「首次获 EU 资助」为 0 点（仅跨学科）</div>
+        <div class="fev-etwrap"><svg id="fevt-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="fev-etfind">
+          DiD 要成立，需先确认两组在<strong>获资助前</strong>本就走势相近。图中事前两点（−2、−1 年）两条线大体平行、都贴近 0（差距约 1pp）；
+          直到<strong>获资助当年（t₀）</strong>，受资助者的跨学科流动率才骤升约 <strong>+5pp</strong> 并维持，对照组只是缓慢上行 ——
+          这正是 DiD 想捕捉的「拐点」，说明那 +3.4pp 主要并非事前就存在的差异。
+        </div>
+        <p class="fev-foot">
+          限制说明：① 事前仅 2 个时点，平行趋势检验<strong>有限</strong>；② t₀ 当年的跳升可能<strong>包含「为获资助而发生的那次流动」</strong>；
+          ③ 更早的 −3 年样本较少（n≈6.7k），已从图中剔除；④ <strong>跨城市</strong>口径下两种算法结论不一致，净效应<strong>不稳健</strong>，本检验仅用于<strong>跨学科</strong>口径。
+          因此结论<strong>仍属关联性证据，不宣称严格因果</strong>（资助按「是否致谢」计、非金额）。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 隐藏彩蛋：点击封面「研究者」展开团队分工 -->
+  <div id="credits" class="credits-overlay" aria-hidden="true">
+    <div class="credits-card" role="dialog" aria-label="团队分工" aria-modal="true">
+      <button class="credits-close" type="button" aria-label="关闭">×</button>
+      <div class="credits-eyebrow">第十组 · 团队分工</div>
+      <h2 class="credits-title">项目分工</h2>
+
+      <div class="credits-group">
+        <div class="cg-head">可视化与开发</div>
+        <div class="cg-row"><span class="cg-name">韩奫秀</span><span class="cg-role">网站整体设计与框架 ·「地点 / 学科流动」可视化 ·「政策评估」可视化</span></div>
+        <div class="cg-row"><span class="cg-name">林茂良</span><span class="cg-role">数据收集与数据集整理 ·「数据介绍」可视化</span></div>
+        <div class="cg-row"><span class="cg-name">朴宣禹</span><span class="cg-role">「机构 / 大学流动」可视化 ·「地点 / 学科流动」可视化</span></div>
+      </div>
+      <div class="credits-group">
+        <div class="cg-head">现场汇报</div>
+        <div class="cg-people">陈民后 · 杨昭慧</div>
+      </div>
+      <div class="credits-group">
+        <div class="cg-head">报告撰写</div>
+        <div class="cg-people">叶靖</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/dataviz/static/js/main.js"></script>
+</body>
+</html>

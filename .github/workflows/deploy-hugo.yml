@@ -1,17 +1,16 @@
-name: Deploy Hugo site from private source
+name: Deploy Hugo Pages site
 
 # IMPORTANT FOR FUTURE AGENTS:
-# This workflow lives in a separate PUBLIC Pages repository.
-# It checks out this source repository into ./source.
-# Hugo resources now live at ./source root, not ./source/site.
-# USE_CACHE=true uses committed ./source/release/data JSON for fast temporary release.
-# USE_CACHE=false regenerates JSON at ./source/release/data, then copies it into ./source/static/data.
+# This workflow lives in the PUBLIC GitHub Pages repository.
+# Hugo resources live at this repo root.
+# projects/dataviz and projects/ontology are clean CSR/static submodules.
+# No Python backend or runtime server is used. Pages deploys only static HTML/CSS/JS/JSON.
+# Dataviz may run a build-time data pipeline before staging JSON; that is not a runtime backend.
+# Build stages project static assets under /dataviz/ and /ontology/ before Hugo.
 
 on:
   push:
     branches:
-      # Since our public repo is using `main` branch,
-      # so this must be `main`, never edit into `pages`
       - main
   workflow_dispatch:
 
@@ -38,32 +37,52 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout private Hugo source
+      - name: Checkout Pages repo with project submodules
         uses: actions/checkout@v6
         with:
-          repository: parksnoopy-undergraduate/Data-Visualization-2026-Spring
-          ref: pages
           token: ${{ secrets.SOURCE_ACCESS_TOKEN }}
-          path: source
           submodules: recursive
           lfs: true
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify checked-out source layout
-        run: |
-          git -C source rev-parse --short HEAD
-          find source -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,120p'
-          test -e source/hugo.toml
-          test -e source/pages
-          test -e source/layouts/visualization/single.html
-          test -e source/themes/PaperMod
-          test -e source/data/pipeline.yml
-          test -e source/scripts/pipeline/build.py
-          test -s source/data/release/wos_all_2008_2023.xlsx
-          python -c "from pathlib import Path; assert not Path('source/data/release/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+      - name: Checkout PaperMod theme
+        uses: actions/checkout@v6
+        with:
+          repository: adityatelange/hugo-PaperMod
+          path: themes/PaperMod
+          persist-credentials: false
 
-      - name: Set up Python for build-time data pipeline
+      - name: Verify CSR source layout
+        run: |
+          git rev-parse --short HEAD
+          find . -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,140p'
+          test -e hugo.toml
+          test -e pages/dataviz/_index.md
+          test -e pages/ontology/index.md
+          test -e layouts/dataviz/single.html
+          test -e layouts/dataviz/list.html
+          test -e layouts/ontology/single.html
+          test -e layouts/data/single.html
+          test -e themes/PaperMod
+          test -e projects/dataviz/static/css/style.css
+          test -e projects/dataviz/static/js/main.js
+          test -e projects/dataviz/data/pipeline.yml
+          test -e projects/dataviz/scripts/pipeline/build.py
+          test -s projects/dataviz/release/data/city-mobility.json
+          test -s projects/dataviz/release/data/timeline.json
+          git -C projects/dataviz lfs pull
+          test -s projects/dataviz/data/release/wos_all_2008_2023.xlsx
+          python -c "from pathlib import Path; assert not Path('projects/dataviz/data/release/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          test -e projects/ontology/index.html
+          test -e projects/ontology/config.toml
+          test -e projects/ontology/static/js/main.js
+          test -e projects/ontology/static/js/data.js
+          test -e projects/ontology/static/css/app.css
+          test -s projects/ontology/static/data/schema.json
+          test -s projects/ontology/static/data/cache.json
+
+      - name: Set up Python for dataviz build-time data pipeline
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -71,24 +90,26 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
 
-      - name: Generate release visualization data
-        working-directory: source
+      - name: Generate or verify dataviz release data
+        working-directory: projects/dataviz
         run: |
           if [ "${USE_CACHE}" = "true" ]; then
             test -s release/data/timeline.json
             test -s release/data/funder-event.json
             test -s release/data/finland.json
-            echo "USE_CACHE=true: using committed release/data JSON"
+            echo "USE_CACHE=true: using committed projects/dataviz/release/data JSON"
           else
             uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
           fi
 
-      - name: Stage generated data for Hugo static publish
-        working-directory: source
+      - name: Stage CSR project assets for Hugo
         run: |
-          rm -rf static/data
-          mkdir -p static/data
-          cp -R release/data/. static/data/
+          rm -rf static
+          mkdir -p static/dataviz/static static/dataviz/static/data static/ontology/static
+          cp -R projects/dataviz/static/. static/dataviz/static/
+          cp -R projects/dataviz/release/data/. static/dataviz/static/data/
+          cp -R projects/ontology/static/. static/ontology/static/
+          cp projects/ontology/config.toml static/ontology/config.toml
 
       - name: Setup Pages
         id: pages
@@ -104,8 +125,7 @@ jobs:
       - name: Verify Hugo
         run: hugo version
 
-      - name: Build Hugo site from private source
-        working-directory: source
+      - name: Build Hugo site
         run: |
           hugo build \
             --gc \
@@ -115,7 +135,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: source/public
+          path: public
 
   deploy:
     runs-on: ubuntu-latest
@@ -129,3 +149,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
