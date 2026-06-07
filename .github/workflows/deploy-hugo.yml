@@ -37,14 +37,22 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout Pages repo with project submodules
+      - name: Checkout Pages repo
         uses: actions/checkout@v6
         with:
           token: ${{ secrets.SOURCE_ACCESS_TOKEN }}
-          submodules: recursive
+          submodules: false
           lfs: true
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Checkout project submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status --recursive
+          git -C projects/dataviz lfs pull
+          git -C projects/ontology lfs pull
 
       - name: Checkout PaperMod theme
         uses: actions/checkout@v6
