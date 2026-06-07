@@ -53,6 +53,23 @@ jobs:
           path: themes/PaperMod
           persist-credentials: false
 
+      - name: Sync project-owned Hugo artifacts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path.cwd()
+          src = root / "projects/ontology/index.html"
+          dst = root / "layouts/ontology/single.html"
+
+          html = src.read_text()
+          html = html.replace('src="static/', 'src="/ontology/static/')
+          html = html.replace('href="static/', 'href="/ontology/static/')
+
+          dst.parent.mkdir(parents=True, exist_ok=True)
+          dst.write_text(html)
+          PY
+
       - name: Verify CSR source layout
         run: |
           git rev-parse --short HEAD
