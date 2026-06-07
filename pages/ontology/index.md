@@ -1,5 +1,5 @@
 ---
-title: "Ceramics KG Extractor"
+title: "明清宫廷瓷器——知识抽取与知识图谱"
 date: 2026-06-04
 draft: false
 summary: "明清宫廷瓷器知识抽取与知识图谱界面。"

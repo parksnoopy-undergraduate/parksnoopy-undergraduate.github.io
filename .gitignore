@@ -3,6 +3,9 @@ public/
 .hugo_build.lock
 resources/_gen/
 
+# Local Hugo theme checkout for preview; CI checks out theme during workflow
+themes/
+
 # Workflow/local staged Hugo static assets copied from project submodules
 static/
 
