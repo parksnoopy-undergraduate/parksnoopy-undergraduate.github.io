@@ -39,10 +39,12 @@ jobs:
     steps:
       - name: Checkout Pages repo with project submodules
         uses: actions/checkout@v6
+        env:
+          GIT_LFS_SKIP_SMUDGE: ${{ env.USE_CACHE == 'true' && '1' || '0' }}
         with:
           token: ${{ secrets.SOURCE_ACCESS_TOKEN }}
           submodules: recursive
-          lfs: true
+          lfs: ${{ env.USE_CACHE != 'true' }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -88,9 +90,13 @@ jobs:
           test -e projects/dataviz/scripts/pipeline/build.py
           test -s projects/dataviz/release/data/city-mobility.json
           test -s projects/dataviz/release/data/timeline.json
-          git -C projects/dataviz lfs pull
-          test -s projects/dataviz/data/release/wos_all_2008_2023.xlsx
-          python -c "from pathlib import Path; assert not Path('projects/dataviz/data/release/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          if [ "${USE_CACHE}" = "true" ]; then
+            echo "USE_CACHE=true: skip Git LFS source data download"
+          else
+            git -C projects/dataviz lfs pull
+            test -s projects/dataviz/data/release/wos_all_2008_2023.xlsx
+            python -c "from pathlib import Path; assert not Path('projects/dataviz/data/release/wos_all_2008_2023.xlsx').read_bytes().startswith(b'version https://git-lfs')"
+          fi
           test -e projects/ontology/index.html
           test -e projects/ontology/config.toml
           test -e projects/ontology/static/js/main.js
@@ -100,11 +106,13 @@ jobs:
           test -s projects/ontology/static/data/cache.json
 
       - name: Set up Python for dataviz build-time data pipeline
+        if: ${{ env.USE_CACHE != 'true' }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
+        if: ${{ env.USE_CACHE != 'true' }}
         uses: astral-sh/setup-uv@v8.2.0
 
       - name: Generate or verify dataviz release data
