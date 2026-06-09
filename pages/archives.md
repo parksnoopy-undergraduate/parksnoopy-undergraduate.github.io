@@ -1,5 +1,5 @@
 ---
-title: "归档"
+title: "Archives"
 layout: "archives"
-summary: "全部文章归档。"
+summary: "All project pages and notes."
 ---

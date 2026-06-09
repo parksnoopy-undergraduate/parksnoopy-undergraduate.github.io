@@ -1,6 +1,6 @@
 ---
-title: "搜索"
+title: "Search"
 layout: "search"
-summary: "站内搜索。"
-placeholder: "搜索项目、应用、数据说明..."
+summary: "Search project pages, apps, and data notes."
+placeholder: "Search projects, apps, data notes..."
 ---
