@@ -37,16 +37,27 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout Pages repo with project submodules
+      - name: Checkout Pages repo
         uses: actions/checkout@v6
         env:
-          GIT_LFS_SKIP_SMUDGE: ${{ env.USE_CACHE == 'true' && '1' || '0' }}
+          GIT_LFS_SKIP_SMUDGE: "1"
         with:
           token: ${{ secrets.SOURCE_ACCESS_TOKEN }}
-          submodules: recursive
+          submodules: false
           lfs: ${{ env.USE_CACHE != 'true' }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Checkout project submodules
+        env:
+          SOURCE_ACCESS_TOKEN: ${{ secrets.SOURCE_ACCESS_TOKEN }}
+          GIT_LFS_SKIP_SMUDGE: "1"
+        run: |
+          test -n "${SOURCE_ACCESS_TOKEN}"
+          auth_header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${SOURCE_ACCESS_TOKEN}" | base64 -w0)"
+          git submodule sync --recursive
+          git -c "http.https://github.com/.extraheader=${auth_header}" submodule update --init --force --recursive
+          git submodule status --recursive
 
       - name: Checkout PaperMod theme
         uses: actions/checkout@v6
