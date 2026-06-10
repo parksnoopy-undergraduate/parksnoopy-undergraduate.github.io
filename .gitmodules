@@ -6,3 +6,7 @@
 	path = projects/ontology
 	url = https://github.com/parksnoopy-undergraduate/Ontology-2026-Spring
 	branch = pages
+[submodule "projects/week"]
+	path = projects/week
+	url = https://github.com/parksnoopy-undergraduate/week-parity
+	branch = main
