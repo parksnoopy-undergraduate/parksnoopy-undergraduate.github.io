@@ -9,8 +9,9 @@ themes/
 # Workflow/local staged Hugo static assets copied from project submodules
 static/
 
-# Generated from projects/ontology/index.html during workflow/local build
+# Generated from project-owned standalone HTML during workflow/local build
 layouts/ontology/single.html
+layouts/week/single.html
 
 # Local caches
 .cache/

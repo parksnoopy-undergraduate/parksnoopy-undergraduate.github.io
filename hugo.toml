@@ -32,7 +32,7 @@ env = "production"
 title = "Undergraduate Project Pages"
 description = "Undergraduate coursework project pages."
 author = ["Undergraduate Project Teams"]
-mainSections = ["dataviz", "ontology"]
+mainSections = ["dataviz", "ontology", "week"]
 defaultTheme = "auto"
 ShowReadingTime = true
 ShowShareButtons = false
@@ -55,7 +55,7 @@ keys = ["title", "permalink", "summary", "content"]
 
 [params.homeInfoParams]
 Title = "Undergraduate Project Pages"
-Content = '''Public Pages shell for course project subpages.<br><br><a href="/dataviz/">Data Visualization</a> · <a href="/ontology/">Ontology</a>'''
+Content = '''Public Pages shell for course project subpages.<br><br><a href="/dataviz/">Data Visualization</a> · <a href="/ontology/">Ontology</a> · <a href="/week/">Week Parity</a>'''
 
 [[menu.main]]
 identifier = "home"
@@ -75,6 +75,12 @@ identifier = "ontology"
 name = "Ontology"
 url = "/ontology/"
 weight = 20
+
+[[menu.main]]
+identifier = "week"
+name = "Week"
+url = "/week/"
+weight = 25
 
 [[menu.main]]
 identifier = "archives"

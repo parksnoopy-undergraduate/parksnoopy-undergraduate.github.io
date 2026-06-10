@@ -3,10 +3,10 @@ name: Deploy Hugo Pages site
 # IMPORTANT FOR FUTURE AGENTS:
 # This workflow lives in the PUBLIC GitHub Pages repository.
 # Hugo resources live at this repo root.
-# projects/dataviz and projects/ontology are clean CSR/static submodules.
+# projects/dataviz, projects/ontology, and projects/week are clean CSR/static submodules.
 # No Python backend or runtime server is used. Pages deploys only static HTML/CSS/JS/JSON.
 # Dataviz may run a build-time data pipeline before staging JSON; that is not a runtime backend.
-# Build stages project static assets under /dataviz/ and /ontology/ before Hugo.
+# Build stages project static assets under /dataviz/, /ontology/, and /week/ before Hugo.
 
 on:
   push:
@@ -61,15 +61,20 @@ jobs:
           from pathlib import Path
 
           root = Path.cwd()
-          src = root / "projects/ontology/index.html"
-          dst = root / "layouts/ontology/single.html"
 
-          html = src.read_text()
-          html = html.replace('src="static/', 'src="/ontology/static/')
-          html = html.replace('href="static/', 'href="/ontology/static/')
+          generated_pages = [
+              ("ontology", root / "projects/ontology/index.html", root / "layouts/ontology/single.html"),
+              ("week", root / "projects/week/index.html", root / "layouts/week/single.html"),
+          ]
 
-          dst.parent.mkdir(parents=True, exist_ok=True)
-          dst.write_text(html)
+          for slug, src, dst in generated_pages:
+              html = src.read_text()
+              html = html.replace('src="static/', f'src="/{slug}/static/')
+              html = html.replace('href="static/', f'href="/{slug}/static/')
+              html = html.replace("import init, { get_week_status_wasm } from './pkg/week_parity_wasm.js';", "import init, { get_week_status_wasm } from '/week/pkg/week_parity_wasm.js';")
+              html = html.replace("import { CONFIG } from './static/js/config.js';", "import { CONFIG } from '/week/static/js/config.js';")
+              dst.parent.mkdir(parents=True, exist_ok=True)
+              dst.write_text(html)
           PY
 
       - name: Verify CSR source layout
@@ -79,9 +84,11 @@ jobs:
           test -e hugo.toml
           test -e pages/dataviz/_index.md
           test -e pages/ontology/index.md
+          test -e pages/week/index.md
           test -e layouts/dataviz/single.html
           test -e layouts/dataviz/list.html
           test -e layouts/ontology/single.html
+          test -e layouts/week/single.html
           test -e layouts/data/single.html
           test -e themes/PaperMod
           test -e projects/dataviz/static/css/style.css
@@ -129,7 +136,7 @@ jobs:
             uvx --with pandas --with openpyxl --with pyyaml python scripts/pipeline/build.py --config data/pipeline.yml
           fi
       - name: Set up Rust
-        uses: actions/setup-rust@1
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install wasm-pack
         run: |
@@ -147,7 +154,6 @@ jobs:
           cp -R projects/dataviz/release/data/. static/dataviz/static/data/
           cp -R projects/ontology/static/. static/ontology/static/
           cp projects/ontology/config.toml static/ontology/config.toml
-          cp projects/week/index.html static/week/index.html
           cp -R projects/week/pkg/. static/week/pkg/
           cp -R projects/week/static/. static/week/static/
           cp projects/week/config.toml static/week/config.toml
