@@ -10,6 +10,7 @@ themes/
 static/
 
 # Generated from project-owned standalone HTML during workflow/local build
+layouts/dataviz/list.html
 layouts/ontology/single.html
 layouts/week/single.html
 
