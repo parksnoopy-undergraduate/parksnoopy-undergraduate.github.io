@@ -5,5 +5,6 @@ draft: false
 summary: "Rust and WebAssembly client-side app for checking odd/even academic weeks."
 tags: ["week", "wasm", "rust"]
 categories: ["project"]
-layout: "week"
+type: "week"
+layout: "week.index"
 ---

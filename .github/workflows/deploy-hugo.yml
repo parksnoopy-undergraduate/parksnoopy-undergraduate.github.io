@@ -66,20 +66,21 @@ jobs:
           path: themes/PaperMod
           persist-credentials: false
 
-      - name: Sync project-owned Hugo artifacts
+      - name: Sync project-owned Hugo layouts
         run: |
           python - <<'PY'
           from pathlib import Path
 
           root = Path.cwd()
-
           generated_pages = [
-              ("dataviz", root / "projects/dataviz/index.html", root / "layouts/dataviz/list.html"),
-              ("ontology", root / "projects/ontology/index.html", root / "layouts/ontology/single.html"),
-              ("week", root / "projects/week/index.html", root / "layouts/week/single.html"),
+              ("dataviz", "list", root / "projects/dataviz/index.html"),
+              ("ontology", "single", root / "projects/ontology/index.html"),
+              ("week", "single", root / "projects/week/index.html"),
           ]
 
-          for slug, src, dst in generated_pages:
+          for slug, kind, src in generated_pages:
+              clean_dst = root / f"layouts/{slug}/{slug}.index.html"
+              hugo_dst = root / f"layouts/{slug}/{kind}.{slug}.index.html"
               html = src.read_text()
               html = html.replace('src="./static/', f'src="/{slug}/static/')
               html = html.replace('href="./static/', f'href="/{slug}/static/')
@@ -90,8 +91,9 @@ jobs:
                   html = html.replace('← 项目说明', '← 回到首页')
               html = html.replace("import init, { get_week_status_wasm } from './pkg/week_parity_wasm.js';", "import init, { get_week_status_wasm } from '/week/pkg/week_parity_wasm.js';")
               html = html.replace("import { CONFIG } from './static/js/config.js';", "import { CONFIG } from '/week/static/js/config.js';")
-              dst.parent.mkdir(parents=True, exist_ok=True)
-              dst.write_text(html)
+              clean_dst.parent.mkdir(parents=True, exist_ok=True)
+              clean_dst.write_text(html)
+              hugo_dst.write_text(f'{{{{ readFile "layouts/{slug}/{slug}.index.html" | safeHTML }}}}\n')
           PY
 
       - name: Verify CSR source layout
@@ -102,10 +104,12 @@ jobs:
           test -e pages/dataviz/_index.md
           test -e pages/ontology/index.md
           test -e pages/week/index.md
-          test -e layouts/dataviz/single.html
-          test -e layouts/dataviz/list.html
-          test -e layouts/ontology/single.html
-          test -e layouts/week/single.html
+          test -e layouts/dataviz/dataviz.index.html
+          test -e layouts/ontology/ontology.index.html
+          test -e layouts/week/week.index.html
+          test -e layouts/dataviz/list.dataviz.index.html
+          test -e layouts/ontology/single.ontology.index.html
+          test -e layouts/week/single.week.index.html
           test -e layouts/data/single.html
           test -e themes/PaperMod
           test -e projects/dataviz/static/css/style.css

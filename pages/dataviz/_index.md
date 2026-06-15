@@ -5,5 +5,6 @@ draft: false
 summary: "2008–2023 年芬兰科研流动与资助政策的 D3 滚动叙事可视化。"
 tags: ["visualization", "d3"]
 categories: ["project"]
-layout: "dataviz"
+type: "dataviz"
+layout: "dataviz.index"
 ---

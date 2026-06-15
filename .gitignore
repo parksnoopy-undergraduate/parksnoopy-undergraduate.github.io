@@ -10,9 +10,13 @@ themes/
 static/
 
 # Generated from project-owned standalone HTML during workflow/local build
-layouts/dataviz/list.html
-layouts/ontology/single.html
-layouts/week/single.html
+layouts/dataviz/dataviz.index.html
+layouts/ontology/ontology.index.html
+layouts/week/week.index.html
+# Hugo compatibility shims; canonical generated files above omit kind prefix
+layouts/dataviz/list.dataviz.index.html
+layouts/ontology/single.ontology.index.html
+layouts/week/single.week.index.html
 
 # Local caches
 .cache/
