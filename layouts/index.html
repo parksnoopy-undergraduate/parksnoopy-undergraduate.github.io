@@ -13,11 +13,13 @@
 {{- end }}
 
 {{- $pages := where site.RegularPages "Type" "in" site.Params.mainSections }}
+{{- $sections := slice }}
 {{- range site.Params.mainSections }}
   {{- with site.GetPage "section" . }}
-    {{- $pages = $pages | append . }}
+    {{- $sections = $sections | append . }}
   {{- end }}
 {{- end }}
+{{- $pages = union $pages $sections }}
 {{- $pages = where $pages "Params.hiddenInHomeList" "!=" "true" }}
 {{- $pages = sort $pages "Date" "desc" }}
 {{- $paginator := .Paginate $pages }}

@@ -55,26 +55,13 @@ keys = ["title", "permalink", "summary", "content"]
 
 [params.homeInfoParams]
 Title = "Undergraduate Project Pages"
-Content = '''Public Pages shell for course project subpages.<br><br><a href="/dataviz/">Data Visualization</a> · <a href="/ontology/">Ontology</a> · <a href="/week/">Week Parity</a>'''
+Content = '''Public Pages shell for course project subpages.'''
 
 [[menu.main]]
 identifier = "home"
 name = "Home"
 url = "/"
 weight = 5
-
-
-[[menu.main]]
-identifier = "dataviz"
-name = "Data Visualization"
-url = "/dataviz/"
-weight = 10
-
-[[menu.main]]
-identifier = "ontology"
-name = "Ontology"
-url = "/ontology/"
-weight = 20
 
 [[menu.main]]
 identifier = "week"
