@@ -10,3 +10,7 @@
 	path = projects/week
 	url = https://github.com/parksnoopy-undergraduate/week-parity
 	branch = main
+[submodule "projects/elective"]
+	path = projects/elective
+	url = https://github.com/ParkSnoopy/pku-elective-prettify
+	branch = pages
