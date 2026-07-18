@@ -3,10 +3,10 @@ name: Deploy Hugo Pages site
 # IMPORTANT FOR FUTURE AGENTS:
 # This workflow lives in the PUBLIC GitHub Pages repository.
 # Hugo resources live at this repo root.
-# projects/dataviz, projects/ontology, and projects/week are clean CSR/static submodules.
+# projects/dataviz, projects/elective, projects/ontology, and projects/week are clean CSR/static submodules.
 # No Python backend or runtime server is used. Pages deploys only static HTML/CSS/JS/JSON.
 # Dataviz may run a build-time data pipeline before staging JSON; that is not a runtime backend.
-# Build stages project static assets under /dataviz/, /ontology/, and /week/ before Hugo.
+# Build stages project static assets under /dataviz/, /elective/, /ontology/, and /week/ before Hugo.
 
 on:
   push:
@@ -74,6 +74,7 @@ jobs:
           root = Path.cwd()
           generated_pages = [
               ("dataviz", "list", root / "projects/dataviz/index.html"),
+              ("elective", "single", root / "projects/elective/index.html"),
               ("ontology", "single", root / "projects/ontology/index.html"),
               ("week", "single", root / "projects/week/index.html"),
           ]
@@ -102,12 +103,15 @@ jobs:
           find . -maxdepth 2 -mindepth 1 -print | sort | sed -n '1,140p'
           test -e hugo.toml
           test -e pages/dataviz/_index.md
+          test -e pages/elective/index.md
           test -e pages/ontology/index.md
           test -e pages/week/index.md
           test -e layouts/dataviz/dataviz.index.html
+          test -e layouts/elective/elective.index.html
           test -e layouts/ontology/ontology.index.html
           test -e layouts/week/week.index.html
           test -e layouts/dataviz/list.dataviz.index.html
+          test -e layouts/elective/single.elective.index.html
           test -e layouts/ontology/single.ontology.index.html
           test -e layouts/week/single.week.index.html
           test -e layouts/data/single.html
@@ -118,6 +122,10 @@ jobs:
           test -e projects/dataviz/scripts/pipeline/build.py
           test -s projects/dataviz/static/data/city-mobility.json
           test -s projects/dataviz/static/data/timeline.json
+          test -e projects/elective/index.html
+          test -e projects/elective/palette.json
+          test -e projects/elective/static/css/style.css
+          test -e projects/elective/static/js/app.js
           if [ "${USE_CACHE}" = "true" ]; then
             echo "USE_CACHE=true: skip Git LFS source data download"
           else
@@ -170,8 +178,9 @@ jobs:
       - name: Stage CSR project assets for Hugo
         run: |
           rm -rf static
-          mkdir -p static/dataviz/static static/dataviz/static/data static/ontology/static static/week/static static/week/pkg
+          mkdir -p static/dataviz/static static/dataviz/static/data static/elective/static static/ontology/static static/week/static static/week/pkg
           cp -R projects/dataviz/static/. static/dataviz/static/
+          cp -R projects/elective/static/. static/elective/static/
           cp -R projects/ontology/static/. static/ontology/static/
           cp projects/ontology/config.toml static/ontology/config.toml
           cp -R projects/week/pkg/. static/week/pkg/

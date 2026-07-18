@@ -32,7 +32,7 @@ env = "production"
 title = "Undergraduate Project Pages"
 description = "Undergraduate coursework project pages."
 author = ["Undergraduate Project Teams"]
-mainSections = ["dataviz", "ontology", "week"]
+mainSections = ["dataviz", "elective", "ontology", "week"]
 defaultTheme = "auto"
 ShowReadingTime = true
 ShowShareButtons = false
@@ -68,6 +68,12 @@ identifier = "week"
 name = "Week"
 url = "/week/"
 weight = 25
+
+[[menu.main]]
+identifier = "elective"
+name = "Elective"
+url = "/elective/"
+weight = 26
 
 [[menu.main]]
 identifier = "archives"
