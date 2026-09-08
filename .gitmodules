@@ -8,7 +8,7 @@
 	branch = pages
 [submodule "projects/week"]
 	path = projects/week
-	url = https://github.com/parksnoopy-undergraduate/week-parity
+	url = https://github.com/ParkSnoopy/week-parity
 	branch = main
 [submodule "projects/elective"]
 	path = projects/elective
